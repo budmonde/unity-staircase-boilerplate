@@ -11,7 +11,7 @@ public interface TrialsGenerator {
     public void NextTrial(TrialResponse response);
 }
 
-public class DummyTrialsGenerator : TrialsGenerator {
+public class SimpleTrialsGenerator : TrialsGenerator {
     private List<TrialConfig> trialsList;
     private int currentTrialIdx;
     public bool AllTrialsCompleted => currentTrialIdx >= trialsList.Count;
@@ -21,29 +21,22 @@ public class DummyTrialsGenerator : TrialsGenerator {
         if (AllTrialsCompleted) return;
         ++currentTrialIdx;
     }
-    public DummyTrialsGenerator() {
-        trialsList = new() {
-            new TrialConfig {
-                feature = 1f,
-            },
-            new TrialConfig {
-                feature = 2f,
-            },
-            new TrialConfig {
-                feature = 3f,
-            },
-            new TrialConfig {
-                feature = 4f,
-            }
+    public static SimpleTrialsGenerator CreateDummyGenerator() {
+        List<TrialConfig> trialList = new() {
+            TrialConfig.CreateDummyTrialConfig(1),
+            TrialConfig.CreateDummyTrialConfig(2),
+            TrialConfig.CreateDummyTrialConfig(3),
+            TrialConfig.CreateDummyTrialConfig(4)
         };
-        currentTrialIdx = 0;
+        int currentTrialIdx = 0;
+        return new SimpleTrialsGenerator{trialsList=trialList, currentTrialIdx=currentTrialIdx};
     }
 }
 
-public class MultipleAdaptiveTrialSequenceGenerator : TrialsGenerator {
-    private List<AdaptiveTrialSequence> sequences;
+public class MultipleTrialSequenceGenerator : TrialsGenerator {
+    private List<TrialSequenceGenerator> sequences;
     private int currentSequenceIdx;
-    private AdaptiveTrialSequence currentSequence => sequences[currentSequenceIdx];
+    private TrialSequenceGenerator currentSequence => sequences[currentSequenceIdx];
 
     public bool AllTrialsCompleted => sequences.All(staircase => staircase.AllTrialsCompleted);
     public TrialConfig CurrentTrial => currentSequence.CurrentTrial;
@@ -57,11 +50,11 @@ public class MultipleAdaptiveTrialSequenceGenerator : TrialsGenerator {
                 break;
         }
     }
-    public MultipleAdaptiveTrialSequenceGenerator() {
+    public MultipleTrialSequenceGenerator() {
         sequences = new() {
-            new OneSidedStaircaseSequence(0.0f, 1.0f, 0.5f, 3),
-            new OneSidedStaircaseSequence(1.0f, 2.0f, 0.5f, 3),
-            new OneSidedStaircaseSequence(2.0f, 3.0f, 0.5f, 3),
+            new OneSidedStaircaseTrialSequenceGenerator(0.0f, 1.0f, 0.5f, 3, TrialConfig.CreateFromFeatureInput),
+            new OneSidedStaircaseTrialSequenceGenerator(1.0f, 2.0f, 0.5f, 3, TrialConfig.CreateFromFeatureInput),
+            new OneSidedStaircaseTrialSequenceGenerator(2.0f, 3.0f, 0.5f, 3, TrialConfig.CreateFromFeatureInput),
         };
     }
 }

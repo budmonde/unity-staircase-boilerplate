@@ -12,7 +12,7 @@ public class TrialsRecorder {
 
     public void LogTrial(string trialId, TrialConfig trialConfig, TrialResponse trialResponse) {
         recordedTrials.Add(new(trialId, trialConfig, trialResponse));
-        Debug.Log($"{trialId}, {trialConfig.feature}, {trialResponse}");
+        Debug.Log($"{trialId}: {trialConfig} => {trialResponse}");
     }
     private void CleanupDir(string path) {
         foreach (FileInfo f in new DirectoryInfo(path).GetFiles()) {
@@ -31,14 +31,14 @@ public class TrialsRecorder {
         using (StreamWriter outStream = System.IO.File.CreateText(tempPath)) {
             outStream.Write("trial_id");
             outStream.Write(",");
-            outStream.Write(TypeHelpers.SerializeFieldLabels<TrialConfig>());
+            outStream.Write(TrialConfig.SerializeLabels());
             outStream.Write(",");
             outStream.Write("response");
             outStream.Write("\n");
             foreach (var item in recordedTrials) {
                 outStream.Write(item.trialId);
                 outStream.Write(",");
-                outStream.Write(TypeHelpers.SerializeFields<TrialConfig>(item.trialConfig));
+                outStream.Write(item.trialConfig.SerializeFields());
                 outStream.Write(",");
                 outStream.Write(item.trialResponse.ToString());
                 outStream.Write("\n");
