@@ -1,50 +1,37 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEditor;
 
+
+//public interface TrialConfig {}
 public struct TrialConfig {
-    public string foo;
-    public int bar;
-    public float baz;
+    public float feature;
+}
+public enum TrialResponse {
+    CORRECT,
+    INCORRECT,
+    INVALID,
 }
 public class ExperimentManager : MonoBehaviour {
-    private List<TrialConfig> trialsList;
-
-    public int currentTrialIdx;
-    public int NumTrials => trialsList.Count;
-    public TrialConfig CurrentTrial => trialsList[currentTrialIdx];
-    public bool AllTrialsCompleted => currentTrialIdx >= NumTrials;
-
-    public void NextTrial() => ++currentTrialIdx;
-
+    private TrialsGenerator trialsGenerator;
+    private TrialsRecorder trialsRecorder;
+    public bool AllTrialsCompleted => trialsGenerator.AllTrialsCompleted;
+    public TrialConfig CurrentTrial => trialsGenerator.CurrentTrial;
+    public string CurrentTrialId => trialsGenerator.CurrentTrialId;
+    public string ExperimentName;
+    public string SubjectInitials;
+    public string BlockNumber;
+    public string OutputRootPath;
+    public void LogTrial(TrialResponse response) => trialsRecorder.LogTrial(CurrentTrialId, CurrentTrial, response);
+    public void NextTrial(TrialResponse response) => trialsGenerator.NextTrial(response);
+    public void StoreLogs() => trialsRecorder.StoreLogs();
     private void OnEnable() {
-        trialsList = GenerateDummyTrialList();
-        currentTrialIdx = 0;
-    }
-    private List<TrialConfig> GenerateDummyTrialList() {
-        List<TrialConfig> tl = new() {
-            new TrialConfig {
-                foo = "one",
-                bar = 1,
-                baz = 1f,
-            },
-            new TrialConfig {
-                foo = "two",
-                bar = 2,
-                baz = 2f,
-            },
-            new TrialConfig {
-                foo = "three",
-                bar = 3,
-                baz = 3f,
-            },
-            new TrialConfig {
-                foo = "four",
-                bar = 4,
-                baz = 4f,
-            }
-        };
-        return tl;
+        trialsGenerator = new MultipleAdaptiveTrialSequenceGenerator();
+        trialsRecorder = new TrialsRecorder(
+            OutputRootPath,
+            $"{ExperimentName}_{SubjectInitials}_{BlockNumber}_{System.DateTime.Now.ToString("yyyyMMdd")}_{System.DateTime.Now.GetHashCode():x}"
+        );
     }
 }
