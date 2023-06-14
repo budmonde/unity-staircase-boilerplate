@@ -20,6 +20,8 @@ public class TrialsRecorder {
         }
     }
     public void StoreLogs() {
+        if (recordedTrials.Count == 0) return;
+
         string tempRoot = $"{Application.dataPath}/_TempData";
         string tempPath = $"{tempRoot}/{outputFilename}.csv";
         string zipPath = $"{outputRoot}/{outputFilename}.zip";
@@ -31,7 +33,7 @@ public class TrialsRecorder {
         using (StreamWriter outStream = System.IO.File.CreateText(tempPath)) {
             outStream.Write("trial_id");
             outStream.Write(",");
-            outStream.Write(TrialConfig.SerializeLabels());
+            outStream.Write(recordedTrials[0].trialConfig.SerializeLabels());
             outStream.Write(",");
             outStream.Write("response");
             outStream.Write("\n");

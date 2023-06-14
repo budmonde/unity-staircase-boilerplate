@@ -10,7 +10,7 @@ public interface TrialsGenerator {
     public string CurrentTrialId { get; }
     public void NextTrial(TrialResponse response);
 }
-
+public interface TrialSequenceGenerator : TrialsGenerator {}
 public class SimpleTrialsGenerator : TrialsGenerator {
     private List<TrialConfig> trialsList;
     private int currentTrialIdx;
@@ -21,18 +21,11 @@ public class SimpleTrialsGenerator : TrialsGenerator {
         if (AllTrialsCompleted) return;
         ++currentTrialIdx;
     }
-    public static SimpleTrialsGenerator CreateDummyGenerator() {
-        List<TrialConfig> trialList = new() {
-            TrialConfig.CreateDummyTrialConfig(1),
-            TrialConfig.CreateDummyTrialConfig(2),
-            TrialConfig.CreateDummyTrialConfig(3),
-            TrialConfig.CreateDummyTrialConfig(4)
-        };
-        int currentTrialIdx = 0;
-        return new SimpleTrialsGenerator{trialsList=trialList, currentTrialIdx=currentTrialIdx};
+    public SimpleTrialsGenerator(List<TrialConfig> trialsList, int currentTrialIdx) {
+        this.trialsList = trialsList;
+        this.currentTrialIdx = currentTrialIdx;
     }
 }
-
 public class MultipleTrialSequenceGenerator : TrialsGenerator {
     private List<TrialSequenceGenerator> sequences;
     private int currentSequenceIdx;
@@ -50,11 +43,50 @@ public class MultipleTrialSequenceGenerator : TrialsGenerator {
                 break;
         }
     }
-    public MultipleTrialSequenceGenerator() {
-        sequences = new() {
-            new OneSidedStaircaseTrialSequenceGenerator(0.0f, 1.0f, 0.5f, 3, TrialConfig.CreateFromFeatureInput),
-            new OneSidedStaircaseTrialSequenceGenerator(1.0f, 2.0f, 0.5f, 3, TrialConfig.CreateFromFeatureInput),
-            new OneSidedStaircaseTrialSequenceGenerator(2.0f, 3.0f, 0.5f, 3, TrialConfig.CreateFromFeatureInput),
-        };
+    public MultipleTrialSequenceGenerator(List<TrialSequenceGenerator> sequences) {
+        this.sequences = sequences;
+    }
+}
+public class OneSidedStaircaseTrialSequenceGenerator : TrialSequenceGenerator {
+    private Func<float, TrialConfig> trialConfigConstructor;
+    private float currentValue;
+    private int trialIdx;
+    private int numTrials;
+    private int approachSign => Math.Sign(TargetValue - StartValue);
+    public float StartValue;
+    public float TargetValue;
+    public float StepValue;
+    public bool AllTrialsCompleted => trialIdx >= numTrials;
+    public TrialConfig CurrentTrial => trialConfigConstructor(currentValue);
+    public string CurrentTrialId => $"{trialIdx:0000}";
+    private float clampValue(float value) {
+        return Math.Clamp(
+            value,
+            (approachSign == 1) ? StartValue : TargetValue,
+            (approachSign == 1) ? TargetValue : StartValue
+        );
+    }
+    public void NextTrial(TrialResponse response) {
+        if (AllTrialsCompleted) return;
+        switch(response) {
+            case TrialResponse.CORRECT:
+                currentValue = clampValue(currentValue + approachSign * StepValue);
+                ++trialIdx;
+                break;
+            case TrialResponse.INCORRECT:
+                currentValue = clampValue(currentValue - approachSign * StepValue);
+                ++trialIdx;
+                break;
+            case TrialResponse.INVALID:
+                break;
+        }
+    }
+    public OneSidedStaircaseTrialSequenceGenerator(float startValue, float targetValue, float stepValue, int numTrials, Func<float, TrialConfig> trialConfigConstructor) {
+        trialIdx = 0;
+        StartValue = currentValue = startValue;
+        TargetValue = targetValue;
+        StepValue = stepValue;
+        this.numTrials = numTrials;
+        this.trialConfigConstructor = trialConfigConstructor;
     }
 }
