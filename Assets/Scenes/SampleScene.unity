@@ -172,7 +172,7 @@ MonoBehaviour:
   ExperimentName: test
   SubjectInitials: mnd
   BlockNumber: 01
-  ExperimentSettingsPath: C:/Users/budmonde/Desktop/test.xml
+  ExperimentSettingsPath: C:/Users/budmonde/Desktop/feature-two-staircase.xml
   OutputRootPath: C:/Users/budmonde/Desktop
 --- !u!114 &675315809
 MonoBehaviour:
