@@ -1,24 +1,46 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Text;
+using System.Xml;
+using System.Xml.Serialization;
+using UnityEngine;
 
-public interface TrialConfig {
-    public StringBuilder SerializeLabels();
-    public StringBuilder SerializeFields();
+[Serializable, XmlType]
+public class Trial {
+    [XmlAttribute]
+    public string Id;
+    [XmlElement]
+    public Config Config;
+    [XmlElement]
+    public Response Response;
+    public override string ToString() => XMLHandler<Trial>.ToString(this);
 }
-public class SimpleTrialConfig : TrialConfig {
-    public float feature;
-    public StringBuilder SerializeLabels() {
-        return TypeHelpers.SerializeFieldLabels<SimpleTrialConfig>();
-    }
-    public StringBuilder SerializeFields() {
-        return TypeHelpers.SerializeFields<SimpleTrialConfig>(this);
-    }
-    public override string ToString() {
-        return $"{SerializeLabels()} = {SerializeFields()}";
-    }
-    public static TrialConfig CreateFromFeatureInput(float feature) {
-        return new SimpleTrialConfig {feature=feature};
-    }
-    public static TrialConfig CreateDummyTrialConfig(int seed) {
-        return new SimpleTrialConfig {feature=(float) seed};
-    }
+[Serializable, XmlType]
+public class Config {
+    [XmlAttribute]
+    public string FeatureOne;
+    [XmlAttribute]
+    public float FeatureTwo;
+    [XmlAttribute]
+    public int FeatureThree;
+    public override string ToString() => XMLHandler<Config>.ToString(this);
+}
+[Serializable, XmlType]
+public enum Response {
+    CORRECT,
+    INCORRECT,
+    INVALID,
+}
+[Serializable, XmlType]
+public class Block {
+    [XmlElement("Trial")]
+    public List<Trial> Trials;
+    public override string ToString() => XMLHandler<Block>.ToString(this);
+}
+[Serializable, XmlType]
+public class BlockConfig {
+    [XmlElement("Config")]
+    public List<Config> Configs;
+    public override string ToString() => XMLHandler<BlockConfig>.ToString(this);
 }
